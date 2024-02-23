@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# chmod +x install_docker.sh
+
 # Updating system packages
 sudo apt update
 # Uncomment the next line if you want to upgrade all system packages
