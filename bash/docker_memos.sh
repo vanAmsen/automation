@@ -2,7 +2,7 @@
 
 # Update system packages
 sudo apt update
-sudo apt upgrade -y
+# sudo apt upgrade -y
 
 # Install Git
 sudo apt install git -y
