@@ -1,0 +1,64 @@
+- name: Install Docker and Deploy Memos Container
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Install required packages
+      apt:
+        name: "{{ packages }}"
+        update_cache: yes
+      vars:
+        packages:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg-agent
+          - software-properties-common
+          - python3-pip  # Ensure pip3 is installed
+
+    - name: Install Docker’s official GPG key
+      ansible.builtin.shell:
+        cmd: |
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+    - name: Add the Docker repository
+      apt_repository:
+        repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+        state: present
+        filename: docker
+
+    - name: Install Docker Engine and plugins
+      apt:
+        name: "{{ packages }}"
+        update_cache: yes
+      vars:
+        packages:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+
+    - name: Install Docker SDK for Python
+      pip:
+        name: docker
+
+    - name: Pull the neosmemo/memos Docker image
+      ansible.builtin.docker_image:
+        name: "neosmemo/memos:stable"
+        source: pull
+
+    - name: Create and start Memos container
+      ansible.builtin.docker_container:
+        name: memos
+        image: "neosmemo/memos:stable"
+        state: started
+        recreate: yes
+        ports:
+          - "80:5230"
+        volumes:
+          - "~/.memos/:/var/opt/memos"
