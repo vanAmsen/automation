@@ -3,6 +3,10 @@
 # Variables
 repo_url="https://raw.githubusercontent.com/vanAmsen/automation/main/bash"
 
+# ANSI color codes
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
 # Array of script names
 scripts=("install_powerdns.sh" "install_powerdns_admin.sh" "install_powerdns_ngnix.sh" "install_powerdns_api.sh")
 
@@ -22,7 +26,12 @@ for script in "${scripts[@]}"; do
         echo "Installation of ${script} failed."
         exit 1
     fi
-    echo "${script} installed successfully."
+    echo -e "${GREEN}${script} installed successfully.${NC}"
+
+    # Pause for user input after installing PowerDNS Admin
+    if [[ "${script}" == "install_powerdns_admin.sh" ]]; then
+        read -p "Press [Enter] to continue with the next installation..."
+    fi
 done
 
 echo "All installations completed successfully."
