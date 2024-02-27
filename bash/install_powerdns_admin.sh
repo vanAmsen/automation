@@ -8,8 +8,8 @@ echo
 apt install python3-dev -y
 apt install -y git libmysqlclient-dev libsasl2-dev libldap2-dev libssl-dev libxml2-dev libxslt1-dev libxmlsec1-dev libffi-dev pkg-config apt-transport-https python3-venv build-essential curl
 
-# Fetch and install Node.js (using version 16 instead of deprecated 14)
-curl -sL https://deb.nodesource.com/setup_16.x | sudo bash -
+# Fetch and install Node.js (using version 18 instead of deprecated 14)
+curl -sL https://deb.nodesource.com/setup_18.x | sudo bash -
 apt install -y nodejs
 
 # Install Yarn package manager
@@ -28,21 +28,34 @@ cd /opt/web/powerdns-admin
 python3 -m venv ./venv
 source ./venv/bin/activate
 
-# Upgrade pip
-pip install --upgrade pip
+# Upgrade pip and setuptools
+pip install --upgrade pip setuptools
 
-# Install requirements
+# Install PostgreSQL development package for psycopg2
+apt-get install libpq-dev
+
+# Install additional system libraries for lxml or other dependencies
+apt-get install libxml2-dev libxslt1-dev
+
+# Install requirements, using binary packages for complex dependencies
+pip install psycopg2-binary
+pip install lxml
 pip install -r requirements.txt
 
 # Configure PowerDNS Admin
 cp /opt/web/powerdns-admin/configs/development.py /opt/web/powerdns-admin/configs/production.py
 
-# Generate a random secret key and insert it into the production config
-secret_key=$(python3 -c "import os; print(os.urandom(16).hex())")
-sed -i "s/'e951e5a1f4b94151b360f47edf596dd2'/'$secret_key'/g" /opt/web/powerdns-admin/configs/production.py
+# Uncomment the library import line
+sed -i 's/#import urllib.parse/import urllib.parse/' /opt/web/powerdns-admin/configs/production.py
 
-# Insert the provided database password into the production config
-sed -i "s/'changeme'/'$db_password'/g" /opt/web/powerdns-admin/configs/production.py
+# Generate a random secret key
+secret_key=$(python3 -c "import os; print(os.urandom(16).hex())")
+
+# Insert the randomly generated secret key
+sed -i "s/SECRET_KEY = '.*'/SECRET_KEY = '$secret_key'/" /opt/web/powerdns-admin/configs/production.py
+
+# Insert the provided database password
+sed -i "s/SQLA_DB_PASSWORD = '.*'/SQLA_DB_PASSWORD = '$db_password'/" /opt/web/powerdns-admin/configs/production.py
 
 # Export app configuration variables
 export FLASK_CONF=../configs/production.py
