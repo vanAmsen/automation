@@ -28,10 +28,6 @@ for script in "${scripts[@]}"; do
     fi
     echo -e "${GREEN}${script} installed successfully.${NC}"
 
-    # Pause for user input after installing PowerDNS Admin
-    if [[ "${script}" == "install_powerdns_admin.sh" ]]; then
-        read -p "Press [Enter] to continue with the next installation..."
-    fi
 done
 
 echo "All installations completed successfully."
