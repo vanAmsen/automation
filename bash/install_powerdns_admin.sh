@@ -114,7 +114,12 @@ systemctl start powerdns-admin.service powerdns-admin.socket
 systemctl enable powerdns-admin.service powerdns-admin.socket
 
 # Check the status of the PowerDNS Admin service
-systemctl status powerdns-admin.service powerdns-admin.socket
+# systemctl status powerdns-admin.service powerdns-admin.socket
+if systemctl is-active --quiet powerdns-admin.service && systemctl is-active --quiet powerdns-admin.socket; then
+    echo "PowerDNS Admin is running and enabled."
+else
+    echo "Error: PowerDNS Admin did not start correctly."
+fi
 
 # Install and configure Nginx
 apt install nginx -y
