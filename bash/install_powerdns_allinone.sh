@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# => install_powerdns.sh
+
 # Prompt for the database name and password
 read -p "Enter the PowerDNS database name: " dbname
 read -sp "Enter the PowerDNS database user password: " dbpassword
@@ -137,3 +139,236 @@ fi
 
 # Check if PowerDNS is listening on port 53
 sudo ss -alnp4 | grep pdns
+
+# => install_powerdns_admin.sh
+
+# Prompt for database password
+read -sp "Enter the password for PowerDNS Admin's database user: " db_password
+echo
+
+# Install dependencies
+apt-get update
+apt-get install -y python3-dev git libmysqlclient-dev libsasl2-dev libldap2-dev libssl-dev libxml2-dev libxslt1-dev libxmlsec1-dev libffi-dev pkg-config apt-transport-https python3-venv build-essential curl libpq-dev
+
+# Install Node.js and Yarn
+curl -sL https://deb.nodesource.com/setup_18.x | bash -
+apt-get install -y nodejs
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+apt-get update
+apt-get install -y yarn
+
+# Clone the PowerDNS Admin repository
+git clone https://github.com/ngoduykhanh/PowerDNS-Admin.git /opt/web/powerdns-admin
+
+# Navigate to the application directory
+cd /opt/web/powerdns-admin
+
+# Set up Python virtual environment
+python3 -m venv ./venv
+source ./venv/bin/activate
+
+# Upgrade pip and install requirements
+pip install --upgrade pip setuptools
+pip install psycopg2-binary lxml
+sed -i 's/psycopg2==[0-9.]*$/psycopg2-binary/' requirements.txt
+pip install -r requirements.txt
+
+# Copy and configure the production settings
+cp /opt/web/powerdns-admin/configs/development.py /opt/web/powerdns-admin/configs/production.py
+
+# Generate a random secret key and update the production.py file
+secret_key=$(python3 -c "import os; print(os.urandom(24).hex())")
+sed -i "s/SECRET_KEY = '.*'/SECRET_KEY = '$secret_key'/" /opt/web/powerdns-admin/configs/production.py
+sed -i "s/SQLA_DB_PASSWORD = '.*'/SQLA_DB_PASSWORD = '$db_password'/" /opt/web/powerdns-admin/configs/production.py
+sed -i 's/#import urllib.parse/import urllib.parse/' /opt/web/powerdns-admin/configs/production.py
+
+# Set environment variables
+export FLASK_CONF=../configs/production.py
+export FLASK_APP=powerdnsadmin/__init__.py
+
+# Database schema upgrade, install dependencies, and build assets
+flask db upgrade
+yarn install --pure-lockfile
+flask assets build
+
+# Start the Flask development server
+echo "Starting the PowerDNS Admin interface..."
+./run.py
+
+# No need to call 'exit' in a script, it will exit when finished
+
+# => install_powerdns_ngnix.sh
+
+# Prompt for server name or IP
+read -p "Enter the server name or IP address for PowerDNS Admin: " server_name
+
+# Define necessary variables
+powerdns_admin_path="/opt/web/powerdns-admin"
+pdns_user="pdns"
+pdns_group="pdns"
+systemd_service_file="/etc/systemd/system/powerdns-admin.service"
+systemd_socket_file="/etc/systemd/system/powerdns-admin.socket"
+systemd_env_file="/etc/systemd/system/powerdns-admin.service.d/override.conf"
+tmpfiles_config_file="/etc/tmpfiles.d/powerdns-admin.conf"
+nginx_config_file="/etc/nginx/conf.d/powerdns-admin.conf"
+
+# Install necessary packages
+sudo apt-get update
+sudo apt-get install -y nginx
+
+# Create PowerDNS-Admin directories and set permissions
+sudo mkdir -p $powerdns_admin_path
+sudo chown -R $pdns_user:$pdns_group $powerdns_admin_path
+
+# Create and set permissions for the run directory
+sudo mkdir -p /run/powerdns-admin/
+sudo chown $pdns_user:$pdns_group /run/powerdns-admin/
+
+# Create systemd service file
+sudo tee $systemd_service_file > /dev/null << EOF
+[Unit]
+Description=PowerDNS-Admin
+Requires=powerdns-admin.socket
+After=network.target
+
+[Service]
+PIDFile=/run/powerdns-admin/pid
+User=$pdns_user
+Group=$pdns_group
+WorkingDirectory=$powerdns_admin_path
+ExecStart=$powerdns_admin_path/venv/bin/gunicorn --pid /run/powerdns-admin/pid --bind unix:/run/powerdns-admin/socket 'powerdnsadmin:create_app()'
+ExecReload=/bin/kill -s HUP \$MAINPID
+ExecStop=/bin/kill -s TERM \$MAINPID
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create systemd socket file
+sudo tee $systemd_socket_file > /dev/null << EOF
+[Unit]
+Description=PowerDNS-Admin socket
+
+[Socket]
+ListenStream=/run/powerdns-admin/socket
+
+[Install]
+WantedBy=sockets.target
+EOF
+
+# Create systemd environment file
+sudo mkdir -p $(dirname $systemd_env_file)
+sudo tee $systemd_env_file > /dev/null << EOF
+[Service]
+Environment="FLASK_CONF=../configs/production.py"
+EOF
+
+# Create tmpfiles configuration
+sudo tee $tmpfiles_config_file > /dev/null << EOF
+d /run/powerdns-admin 0755 $pdns_user $pdns_group -
+EOF
+
+# Reload systemd and enable PowerDNS-Admin service
+sudo systemctl daemon-reload
+sudo systemctl start powerdns-admin.socket
+sudo systemctl enable powerdns-admin.socket
+
+# Configure Nginx
+sudo tee $nginx_config_file > /dev/null << EOF
+server {
+  listen *:80;
+  server_name               $server_name;
+
+  index                     index.html index.htm index.php;
+  root                      $powerdns_admin_path;
+  access_log                /var/log/nginx/powerdns_admin_access.log combined;
+  error_log                 /var/log/nginx/powerdns_admin_error.log;
+
+  client_max_body_size              10m;
+  client_body_buffer_size           128k;
+  proxy_redirect                    off;
+  proxy_connect_timeout             90;
+  proxy_send_timeout                90;
+  proxy_read_timeout                90;
+  proxy_buffers                     32 4k;
+  proxy_buffer_size                 8k;
+  proxy_set_header                  Host \$host;
+  proxy_set_header                  X-Real-IP \$remote_addr;
+  proxy_set_header                  X-Forwarded-For \$proxy_add_x_forwarded_for;
+  proxy_headers_hash_bucket_size    64;
+
+  location ~ ^/static/  {
+    include  /etc/nginx/mime.types;
+    root $powerdns_admin_path/powerdnsadmin;
+
+    location ~*  \.(jpg|jpeg|png|gif)\$ {
+      expires 365d;
+    }
+
+    location ~* ^.+.(css|js)\$ {
+      expires 7d;
+    }
+  }
+
+  location / {
+    proxy_pass            http://unix:/run/powerdns-admin/socket;
+    proxy_read_timeout    120;
+    proxy_connect_timeout 120;
+    proxy_redirect        off;
+  }
+}
+EOF
+
+# Check nginx syntax and restart the service
+sudo nginx -t && sudo systemctl restart nginx
+
+# Activate virtual environment and perform database migration
+cd $powerdns_admin_path
+source venv/bin/activate
+export FLASK_APP=powerdnsadmin/__init__.py
+export FLASK_CONF=../configs/production.py
+flask db upgrade
+
+# Restart PowerDNS-Admin service
+sudo systemctl restart powerdns-admin.service
+
+echo "PowerDNS Admin setup is complete. Access it at http://$server_name"
+
+# => install_powerdns_api.sh
+
+# PowerDNS configuration variables
+pdns_config_path="/etc/powerdns/pdns.conf"
+api_key=$(openssl rand -hex 16) # Generate a secure random API key
+webserver_port="8081"
+pdns_version=$(pdns_control version) # Dynamically retrieve PowerDNS version
+api_url="http://127.0.0.1:${webserver_port}/" # Use loopback address for API URL
+
+# Configure PowerDNS API settings
+echo "Configuring PowerDNS API..."
+sudo sed -i "s/^#* *api=.*/api=yes/" $pdns_config_path
+sudo sed -i "s/^#* *api-key=.*/api-key=$api_key/" $pdns_config_path
+sudo sed -i "s/^#* *webserver=.*/webserver=yes/" $pdns_config_path
+sudo sed -i "s/^#* *webserver-port=.*/webserver-port=$webserver_port/" $pdns_config_path
+sudo sed -i "s/^#* *webserver-address=.*/webserver-address=0.0.0.0/" $pdns_config_path
+
+# Restart PowerDNS service
+echo "Restarting PowerDNS service..."
+sudo systemctl restart pdns
+
+# Verify API is functioning
+echo "Verifying PowerDNS API..."
+response=$(curl -s -o /dev/null -w "%{http_code}" --header "X-Api-Key: $api_key" "${api_url}api/v1/servers/localhost")
+if [ "$response" == "200" ]; then
+    echo "API is functioning correctly."
+else
+    echo "API verification failed with HTTP status code: $response"
+fi
+
+# Output the configuration for the user
+echo "PowerDNS API configuration completed."
+echo "API URL: $api_url"
+echo "API Key: $api_key"
+echo "PowerDNS Version: $pdns_version"
+
