@@ -4,8 +4,8 @@
 pdns_config_path="/etc/powerdns/pdns.conf"
 api_key=$(openssl rand -hex 16) # Generate a secure random API key
 webserver_port="8081"
-pdns_version="4.1.1" # Replace with your actual PowerDNS version
-api_url="http://0.0.0.0:$webserver_port/" # Replace with actual API URL if different
+pdns_version=$(pdns_control version) # Dynamically retrieve PowerDNS version
+api_url="http://$(hostname -I | awk '{print $1}'):${webserver_port}/" # Use the first IP from the `hostname` command
 
 # Configure PowerDNS API settings
 echo "Configuring PowerDNS API..."
