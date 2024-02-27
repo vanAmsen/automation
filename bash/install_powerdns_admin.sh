@@ -172,8 +172,8 @@ nginx -t && systemctl restart nginx
 # Change the ownership of powerdns-admin to www-data
 chown -R www-data:www-data /opt/web/powerdns-admin
 
-# Output completion message
-echo "PowerDNS Admin setup is complete. Access it at http://localhost:9191"
+# Output completion message with the provided server name
+echo "PowerDNS Admin setup is complete. Access it at http://$server_name"
 
 # Exit from the root user to a regular state
 exit
