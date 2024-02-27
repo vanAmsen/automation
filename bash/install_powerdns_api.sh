@@ -9,10 +9,10 @@ api_url="http://$(hostname -I | awk '{print $1}'):${webserver_port}/" # Use the 
 
 # Configure PowerDNS API settings
 echo "Configuring PowerDNS API..."
-sudo sed -i "/^# api=/c\api=yes" $pdns_config_path
-sudo sed -i "/^# api-key=/c\api-key=$api_key" $pdns_config_path
-sudo sed -i "/^# webserver=/c\webserver=yes" $pdns_config_path
-sudo sed -i "/^# webserver-port=/c\webserver-port=$webserver_port" $pdns_config_path
+sudo sed -i "s/^#* *api=.*/api=yes/" $pdns_config_path
+sudo sed -i "s/^#* *api-key=.*/api-key=$api_key/" $pdns_config_path
+sudo sed -i "s/^#* *webserver=.*/webserver=yes/" $pdns_config_path
+sudo sed -i "s/^#* *webserver-port=.*/webserver-port=$webserver_port/" $pdns_config_path
 
 # Restart PowerDNS service
 echo "Restarting PowerDNS service..."
