@@ -32,7 +32,7 @@ source ./venv/bin/activate
 pip install --upgrade pip setuptools
 
 # Install PostgreSQL development package for psycopg2
-apt-get install libpq-dev
+apt-get install -y libpq-dev
 
 # Install additional system libraries for lxml or other dependencies
 apt-get install libxml2-dev libxslt1-dev
