@@ -50,8 +50,8 @@ flask db upgrade
 yarn install --pure-lockfile
 flask assets build
 
-# Inform user how to run the application
-echo "To run the PowerDNS Admin interface, execute: ./run.py"
-echo "Remember to configure Nginx or another web server to serve the application in production."
+# Start the Flask development server
+echo "Starting the PowerDNS Admin interface..."
+./run.py
 
 # No need to call 'exit' in a script, it will exit when finished
