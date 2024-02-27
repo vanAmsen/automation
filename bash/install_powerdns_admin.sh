@@ -3,6 +3,9 @@
 # Prompt for database password
 read -sp "Enter the password for PowerDNS Admin's database user: " db_password
 echo
+# Prompt for server name or IP address
+read -p "Enter the server name or IP address for PowerDNS Admin: " server_name
+echo
 
 # Install PowerDNS Admin Dependencies
 apt install python3-dev -y
@@ -128,7 +131,7 @@ apt install nginx -y
 cat > /etc/nginx/sites-available/powerdns-admin.conf << 'EOF'
 server {
     listen 80;
-    server_name localhost;
+    server_name $server_name;
 
     index index.html index.htm index.php;
     root /opt/web/powerdns-admin;
