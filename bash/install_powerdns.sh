@@ -127,8 +127,13 @@ sudo chown pdns: /etc/powerdns/pdns.d/pdns.local.gmysql.conf
 # Restart PowerDNS service
 sudo systemctl restart pdns
 
-# Confirm the status of the PowerDNS service
-sudo systemctl status pdns
+# sudo systemctl status pdns
+# Check if PowerDNS service is active
+if sudo systemctl is-active --quiet pdns; then
+    echo "PowerDNS service is running."
+else
+    echo "Error: PowerDNS service is not running."
+fi
 
 # Check if PowerDNS is listening on port 53
 sudo ss -alnp4 | grep pdns
