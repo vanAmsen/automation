@@ -13,7 +13,8 @@ def load_translation(from_lang_code, to_lang_code):
     raise Exception(f"Translation package for {from_lang_code} to {to_lang_code} not found")
 
 def translate_text(text, translation):
-    return translation.translate(text)
+    # Translate and escape single quotes in the translated text
+    return translation.translate(text).replace("'", "\\'")
 
 source_directory = '/var/www/opencart/catalog/language/en-gb/'
 target_directory = '/var/www/opencart/catalog/language/pl-pl/'
@@ -45,7 +46,7 @@ for subdir, dirs, files in os.walk(source_directory):
                     original_text = value.strip(" ;\n\"'")
                     translated_part = translate_text(original_text, translation)
                     print(f'Original: {original_text} | Translated: {translated_part}')
-                    translated_line = key + '= "' + translated_part + "\";\n"
+                    translated_line = key + "= '" + translated_part + "';\n"
                     translated_content.append(translated_line)
                 else:
                     translated_content.append(line)
