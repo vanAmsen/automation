@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# curl -o install_docker.sh https://raw.githubusercontent.com/vanAmsen/automation/main/bash/install_docker.sh
 # chmod +x install_docker.sh
 
 # Updating system packages
