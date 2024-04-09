@@ -2,6 +2,7 @@
 
 # curl -o glm_auto_price.sh https://raw.githubusercontent.com/vanAmsen/automation/main/bash/glm_auto_price.sh
 # chmod +x glm_auto_price.sh
+# 0 * * * * /home/ubuntu/glm_auto_price.sh
 
 # Function to get task count
 get_task_count() {
