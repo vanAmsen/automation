@@ -48,7 +48,7 @@ if [ "$task_count" -eq 0 ]; then
     echo "Price decreased to $new_price"
 else
     # Increase price by 5%
-    new_price=$(echo "scale=18; $current_price * 1.02" | bc -l)
+    new_price=$(echo "scale=18; $current_price * 1.03" | bc -l)
     update_price $new_price
     echo "Price increased to $new_price"
 fi
