@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# curl -o glm_auto_price.sh https://raw.githubusercontent.com/vanAmsen/automation/main/bash/glm_auto_price.sh
+# chmod +x glm_auto_price.sh
+
 # Function to get task count
 get_task_count() {
     local count=$(golemsp status | grep -oP 'last 1h (processed|in progress)\s+\K\d+' | paste -sd+ | bc)
