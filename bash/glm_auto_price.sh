@@ -40,12 +40,12 @@ fi
 # If no tasks processed or in progress in the last hour
 if [ "$task_count" -eq 0 ]; then
     # Decrease price by 5%
-    new_price=$(echo "scale=18; $current_price * 0.95" | bc -l)
+    new_price=$(echo "scale=18; $current_price * 0.98" | bc -l)
     update_price $new_price
     echo "Price decreased to $new_price"
 else
     # Increase price by 5%
-    new_price=$(echo "scale=18; $current_price * 1.05" | bc -l)
+    new_price=$(echo "scale=18; $current_price * 1.02" | bc -l)
     update_price $new_price
     echo "Price increased to $new_price"
 fi
