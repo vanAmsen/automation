@@ -29,7 +29,7 @@ update_price() {
 
 # Main logic
 task_count=$(get_task_count)
-echo "Task count: $task_count"
+echo "$(date +"%Y-%m-%d %H:%M:%S") -  Task count: $task_count"
 
 current_price=$(get_current_cpu_price)
 echo "Current price: $current_price"
