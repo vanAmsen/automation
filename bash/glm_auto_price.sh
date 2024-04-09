@@ -4,6 +4,9 @@
 # chmod +x glm_auto_price.sh
 # 0 * * * * /home/ubuntu/glm_auto_price.sh
 
+PATH=$PATH:/root/.local/bin
+export PATH
+
 # Function to get task count
 get_task_count() {
     local count=$(golemsp status | grep -oP 'last 1h (processed|in progress)\s+\K\d+' | paste -sd+ | bc)
