@@ -82,7 +82,7 @@ if [ "$task_count" -eq 0 ]; then
     echo "Restarted golemsp"
 else
     # Increase price by 4%
-    new_price=$(echo "scale=18; $current_price * 1.04" | bc -l)
+    new_price=$(echo "scale=18; $current_price * 1.03" | bc -l)
     update_price $new_price
     echo "Price increased to $new_price"
 fi
