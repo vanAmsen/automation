@@ -35,7 +35,7 @@ restart_golemsp() {
 
     # Check if the current hour is divisible by 4
     if (( current_hour % 8 != 0 )); then
-        echo "Current hour ($current_hour) is not divisible by 4. Skipping golemsp restart."
+        echo "Current hour ($current_hour) is not divisible by 8. Skipping golemsp restart."
         return
     fi
 
