@@ -34,7 +34,7 @@ restart_golemsp() {
     current_hour=$((10#$current_hour))
 
     # Check if the current hour is divisible by 4
-    if (( current_hour % 4 != 0 )); then
+    if (( current_hour % 8 != 0 )); then
         echo "Current hour ($current_hour) is not divisible by 4. Skipping golemsp restart."
         return
     fi
@@ -82,7 +82,7 @@ if [ "$task_count" -eq 0 ]; then
     echo "Restarted golemsp"
 else
     # Increase price by 4%
-    new_price=$(echo "scale=18; $current_price * 1.03" | bc -l)
+    new_price=$(echo "scale=18; $current_price * 1.04" | bc -l)
     update_price $new_price
     echo "Price increased to $new_price"
 fi
