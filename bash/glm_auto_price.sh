@@ -33,7 +33,7 @@ restart_golemsp() {
     local current_hour=$(date +"%H")
     current_hour=$((10#$current_hour))
 
-    # Check if the current hour is divisible by 4
+    # Check if the current hour is divisible by 12
     if (( current_hour % 12 != 0 )); then
         echo "Current hour ($current_hour) is not divisible by 12. Skipping golemsp restart."
         return
