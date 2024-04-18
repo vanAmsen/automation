@@ -73,16 +73,19 @@ fi
 
 # If no tasks processed or in progress in the last hour
 if [ "$task_count" -eq 0 ]; then
-    new_price=$(echo "scale=18; $current_price * 0.98" | bc -l)
+    # No price decrease; keep the same logic as previously modified
+    decrease_factor=$(shuf -e 1.00 0.99 0.98 -n 1)
+    new_price=$(echo "scale=18; $current_price * $decrease_factor" | bc -l)
     update_price $new_price
-    echo "Price decreased to $new_price"
+    echo "Price decreased to $new_price by $(echo "scale=2; (1 - $decrease_factor) * 100" | bc)%" 
     
     # Restart golemsp
     restart_golemsp
     echo "Restarted golemsp"
 else
-    # Increase price by 4%
-    new_price=$(echo "scale=18; $current_price * 1.04" | bc -l)
+    # Randomly choose to increase price by 2%, 3%, 4%, 5%, or 6%
+    increase_factor=$(shuf -e 1.02 1.03 1.04 1.05 1.06 -n 1)
+    new_price=$(echo "scale=18; $current_price * $increase_factor" | bc -l)
     update_price $new_price
-    echo "Price increased to $new_price"
+    echo "Price increased to $new_price by $(echo "scale=2; ($increase_factor - 1) * 100" | bc)%"
 fi
