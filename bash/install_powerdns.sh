@@ -85,6 +85,7 @@ CREATE TABLE cryptokeys (
   flags                 INT NOT NULL,
   active                BOOL,
   content               TEXT,
+  published             TINYINT(1) DEFAULT 0,   -- Added the published column
   PRIMARY KEY(id)
 ) Engine=InnoDB CHARACTER SET 'latin1';
 CREATE INDEX domainidindex ON cryptokeys(domain_id);
