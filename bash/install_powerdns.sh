@@ -31,6 +31,7 @@ CREATE TABLE domains (
   PRIMARY KEY (id)
 ) Engine=InnoDB CHARACTER SET 'latin1';
 CREATE UNIQUE INDEX name_index ON domains(name);
+
 CREATE TABLE records (
   id                    BIGINT AUTO_INCREMENT,
   domain_id             INT DEFAULT NULL,
@@ -48,12 +49,14 @@ CREATE TABLE records (
 CREATE INDEX nametype_index ON records(name,type);
 CREATE INDEX domain_id ON records(domain_id);
 CREATE INDEX ordername ON records (ordername);
+
 CREATE TABLE supermasters (
   ip                    VARCHAR(64) NOT NULL,
   nameserver            VARCHAR(255) NOT NULL,
   account               VARCHAR(40) CHARACTER SET 'utf8' NOT NULL,
   PRIMARY KEY (ip, nameserver)
 ) Engine=InnoDB CHARACTER SET 'latin1';
+
 CREATE TABLE comments (
   id                    INT AUTO_INCREMENT,
   domain_id             INT NOT NULL,
@@ -66,6 +69,7 @@ CREATE TABLE comments (
 ) Engine=InnoDB CHARACTER SET 'latin1';
 CREATE INDEX comments_name_type_idx ON comments (name, type);
 CREATE INDEX comments_order_idx ON comments (domain_id, modified_at);
+
 CREATE TABLE domainmetadata (
   id                    INT AUTO_INCREMENT,
   domain_id             INT NOT NULL,
@@ -74,6 +78,7 @@ CREATE TABLE domainmetadata (
   PRIMARY KEY (id)
 ) Engine=InnoDB CHARACTER SET 'latin1';
 CREATE INDEX domainmetadata_idx ON domainmetadata (domain_id, kind);
+
 CREATE TABLE cryptokeys (
   id                    INT AUTO_INCREMENT,
   domain_id             INT NOT NULL,
@@ -83,6 +88,7 @@ CREATE TABLE cryptokeys (
   PRIMARY KEY(id)
 ) Engine=InnoDB CHARACTER SET 'latin1';
 CREATE INDEX domainidindex ON cryptokeys(domain_id);
+
 CREATE TABLE tsigkeys (
   id                    INT AUTO_INCREMENT,
   name                  VARCHAR(255),
@@ -91,10 +97,9 @@ CREATE TABLE tsigkeys (
   PRIMARY KEY (id)
 ) Engine=InnoDB CHARACTER SET 'latin1';
 CREATE UNIQUE INDEX namealgoindex ON tsigkeys(name, algorithm);
-
 EOF
 
-# Step 2: Install PowerDNS
+# Step 5: Install PowerDNS
 # Disable systemd-resolved
 sudo systemctl disable --now systemd-resolved
 
@@ -107,8 +112,7 @@ echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
 # Install PowerDNS
 sudo apt-get install pdns-server pdns-backend-mysql -y
 
-# Step 3: Configure PowerDNS
-# Configuration of PowerDNS
+# Step 6: Configure PowerDNS
 cat <<EOF | sudo tee /etc/powerdns/pdns.d/pdns.local.gmysql.conf
 # MySQL Configuration
 launch+=gmysql
@@ -127,7 +131,6 @@ sudo chown pdns: /etc/powerdns/pdns.d/pdns.local.gmysql.conf
 # Restart PowerDNS service
 sudo systemctl restart pdns
 
-# sudo systemctl status pdns
 # Check if PowerDNS service is active
 if sudo systemctl is-active --quiet pdns; then
     echo "PowerDNS service is running."
