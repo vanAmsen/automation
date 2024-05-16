@@ -22,6 +22,9 @@ sudo sed -i "s|^#* *webserver=.*|webserver=yes|" $pdns_config_path
 sudo sed -i "s|^#* *webserver-port=.*|webserver-port=$webserver_port|" $pdns_config_path
 sudo sed -i "s|^#* *webserver-address=.*|webserver-address=0.0.0.0|" $pdns_config_path
 
+# Configure webserver allowed IPs
+sudo sed -i "s|^#* *webserver-allow-from=.*|webserver-allow-from=127.0.0.1,::1,$local_net|" $pdns_config_path
+
 # Configure allow-from, allow-axfr-ips, and allow-dnsupdate-from settings
 sudo sed -i "s|^#* *allow-from=.*|allow-from=127.0.0.0/8,::1,$local_net|" $pdns_config_path
 sudo sed -i "s|^#* *allow-axfr-ips=.*|allow-axfr-ips=127.0.0.0/8,::1,$local_net|" $pdns_config_path
